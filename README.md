@@ -1,4 +1,4 @@
-## I trained an A.I. to beat Minesweeper.. without teaching it any rules!
+## Train an A.I. to beat Minesweeper.. without teaching it any rules!
 
 Of course, since this is a Reinforcement Learning project, the above statement should be a given. After all, Reinforcement Learning is all about having a machine learning model improve through trial-and-error. Below is a comparison of a model playing Minesweeper before training and after training on ~half a million games!
 
@@ -37,7 +37,7 @@ Reinforcement Learning (RL) is an area of machine learning that aims to train a 
 - **The Agent**: This is essentially the computer, which takes actions on the **environment** based on what it thinks will result the highest reward / lowest penalty.
 - **The Environment**: This is the game. Its state is updated every time the **agent** takes an action. Each action is assigned a reward based on our **reward structure**. The environment's current state, action, reward and new state are collectively called a **transition**. The current state and reward are fed back to the agent so that it can learn from these experiences. By accumulating experience, the agent develops a better **policy** (*i.e.* behaviour) in performing the task at hand.
 
-So the goal of RL is for the **Agent** to learn an optimal **policy** by pursuing actions that return the greatest reward. There are several different types of RL algorithms. In this project, I used a **Deep Q-learning Network** (DQN).
+So the goal of RL is for the **Agent** to learn an optimal **policy** by pursuing actions that return the greatest reward. There are several different types of RL algorithms. In this project, We will use a **Deep Q-learning Network** (DQN).
 
 ### What is Deep Q-learning? <a name='DQN'></a>
 
@@ -84,65 +84,16 @@ Two other concepts that were key to recent improvements in deep reinforcement le
 **Double Deep Q-Learning Networks (DDQN):** Instead of one network estimating Q and updating based on its own estimates, we use two networks, one for action selection and one for action evaluation. The rationale behind this is to avoid overestimation bias - since we are taking the maximum of estimated Q-values, our model tends to overestimate them. To elaborate, say the true Q-value for all actions equal 0 and our estimates are distributed such that some are greater than 0 and some are lower. The maximum of these estimates is obviously above 0 and hence, an overestimate. The solution is to use two separate models, the primary model and the target model. The primary model is updated at every step and used to select actions. The target model is used to estimate the maximum Q-value which are used to train the primary model. The parameters of the primary model are periodically copied (or averaged) over to the target model every so often (another parameter you can adjust), leading to more stable training. Here is experience replay and double DQN implemented in python:
 
 
-```python
-# code was adapted from this [blog](https://pythonprogramming.net/training-deep-q-learning-dqn-reinforcement-learning-python-tutorial/?completed=/deep-q-learning-dqn-reinforcement-learning-python-tutorial/)
-BATCH_SIZE = 64
-DISCOUNT = 0.9
-UPDATE_TARGET_EVERY = 5
-target_update_counter = 0
-
-# batch contains a random sample of (state, action, reward, new_state) transitions
-batch = random.sample(replay_buffer, BATCH_SIZE)
-
-# model and target_model are your primary and target model, respectively
-current_states = np.array([transition[0] for transition in batch])
-current_qs_list = model.predict(current_states)
-
-new_current_states = np.array([transition[3] for transition in batch])
-future_qs_list = target_model.predict(new_current_states)
-
-X,y = [], []
-
-# done is a boolean that is True if the game is at a terminal state
-for i, (current_state, action, reward, new_current_state, done) in enumerate(batch):
-    if not done:
-        max_future_q = np.max(future_qs_list[i])
-        new_q = reward + DISCOUNT * max_future_q
-    else:
-        new_q = reward
-
-    current_qs = current_qs_list[i]
-    current_qs[action] = new_q
-
-    X.append(current_state)
-    y.append(current_qs)
-
-model.fit(np.array(X), np.array(y), batch_size=BATCH_SIZE, shuffle=False)
-
-# Update target network counter every episode
-if done:
-    target_update_counter += 1
-
-# Update target network with weights of primary network, every 5 episodes
-if target_update_counter > UPDATE_TARGET_EVERY:
-    target_model.set_weights(model.get_weights())
-    target_update_counter = 0
-```
-
-
-Hope the above helps you understand the concepts around DQNs and perhaps even helps you implement your own Reinforcement Learning project! Now I'll go into explaining my Minesweeper DQN agent.
-
-
 ## Using Reinforcement Learning to Beat Minesweeper <a name='MS'></a>
 
-My custom Minesweeper Agent class can be found in [MinesweeperAgent.py](). The Minesweeper Agent is initialized by specifying the number of rows, columns and mines of the board it will play like so:
+My custom Minesweeper Agent class can be found in [MinesweeperAgentWeb.py](). The Minesweeper Agent is initialized by specifying the number of rows, columns and mines of the board it will play like so:
 
 ```python
 # dimensions and mine number for Beginner mode
 agent = MinesweeperAgent(9, 9, 10)
 ```
 
-The state of a Minesweeper board is represented as an image with dimensions being equal to that of the board. Number tiles are represented by integers ranging from 1 to 8. 0 represents an empty tile, -1 represents unknown and -2 represents a mine. These integers are scaled to be between -1 and 1 by dividing by 8. Since the states can be treated as images, I used a convolutional neural network so that my model can learn local patterns regardless of where they are in the 'image'. Code for my neural network can be found [here](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/blob/master/DQN.py). From trying out different numbers of layers/neurons, I decided on 4 convolutional layers of 128 neurons each followed by 2 fully connected dense layers of 512 neurons each (will explain my choice later).
+The state of a Minesweeper board is represented as an image with dimensions being equal to that of the board. Number tiles are represented by integers ranging from 1 to 8. 0 represents an empty tile, -1 represents unknown and -2 represents a mine. These integers are scaled to be between -1 and 1 by dividing by 8. Since the states can be treated as images, I recommend using a convolutional neural network so that the model can learn local patterns regardless of where they are in the 'image'. From trying out different numbers of layers/neurons, I recommend using 4 convolutional layers of 128 neurons each followed by 2 fully connected dense layers of 512 neurons each (will explain my choice later).
 
 The reward structure for my Minesweeper agent is as follows:
 
@@ -153,7 +104,7 @@ The reward structure for my Minesweeper agent is as follows:
 > The red boxes indicate the most recent action taken. Progress is for moves that have at least one already revealed tile around them while guesses are moves that are completely isolated from revealed tiles.
 
 
-This reward structure is almost identical to the one used in [jakejhansen's Github Repo](https://github.com/jakejhansen/minesweeper_solver). A guess is given a negative reward because although it can reveal safe squares, it does so through luck rather than logic. My reward structure (and my agent) differs from the one referenced above by excluding non-progress moves (clicking on already revealed tiles) altogether. This speeds up training because the agent does not waste time learning to not click on already clicked-on squares. I do this by simply lowering the Q-values for already revealed squares to the minimum Q-value so that the agent will be guaranteed to pick the maximum Q-value among the unsolved squares:
+This reward structure is almost identical to the one used in [jakejhansen's Github Repo](https://github.com/jakejhansen/minesweeper_solver). A guess is given a negative reward because although it can reveal safe squares, it does so through luck rather than logic. My reward structure (and my agent) differs from the one referenced above by excluding non-progress moves (clicking on already revealed tiles) altogether. This speeds up training because the agent does not waste time learning to not click on already clicked-on squares. We can do this by simply lowering the Q-values for already revealed squares to the minimum Q-value so that the agent will be guaranteed to pick the maximum Q-value among the unsolved squares:
 
 
 ```python
@@ -174,7 +125,7 @@ def get_action(self, state):
   return move
 ```
 
-As in [Sentdex's Deep Q-learning tutorial](https://www.youtube.com/watch?v=t3fbETsIBCY&list=PLQVvvaa0QuDezJFIOU5wDdfy4e9vdnx-7&index=5&ab_channel=sentdex), I used a Tensorboard to track the performance of my models. The Tensorboard class was modified to *not* output a log file every time .fit() is called (default behaviour). If using Tensorflow version 2+ use [my_tensorboard2.py](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/blob/master/my_tensorboard2.py), otherwise use [my_tensorboard.py](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/blob/master/my_tensorboard.py).
+As in [Sentdex's Deep Q-learning tutorial](https://www.youtube.com/watch?v=t3fbETsIBCY&list=PLQVvvaa0QuDezJFIOU5wDdfy4e9vdnx-7&index=5&ab_channel=sentdex), I used a Tensorboard to track the performance of my models. The Tensorboard class was modified to *not* output a log file every time .fit() is called (default behaviour). If using Tensorflow version 2+ use [my_tensorboard2.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/my_tensorboard2.py), otherwise use [my_tensorboard.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/my_tensorboard.py).
 
 Here is an example of a Tensorboard output tracking the median reward and win rate obtained by different models. Here I'm keeping all parameters constant except for the number of neurons/layers in my convolutional network.
 
@@ -194,21 +145,9 @@ tensorboard --logdir logs
 ```
 
 
-Code for training can be found in [train.py](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/blob/master/train.py) which trains the agent on Beginner mode by default (can adjust nrows, ncolumns and nmines using the command line arguments).
+Code for training can be found in [train.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/DQN/train.py) which trains the agent on Beginner mode by default (can adjust nrows, ncolumns and nmines using the command line arguments).
 
-To see your agent in action, go to [minesweeperonline.com](http://minesweeperonline.com/#beginner), set the zoom level to 175% and set the game to be the same mode you trained on. [test.py](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/blob/master/test.py) uses the [pyautogui](https://pyautogui.readthedocs.io/en/latest/) package to detect objects on screen and gives the agent control of the mouse. (Make sure nothing covers the Minesweeper board on screen). Pyautogui uses the pictures in the [pics](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning/tree/master/pics) folder for detection.
-
-> pyautogui's detection functionality is quite slow - this is why I made my own Minesweeper environment as opposed to training the agent by playing on the website.
-
-
-### Work in progress
-- Hyperparameter tuning: now that I've identified a good network size, I can try out different hyperparameters to achieve maximal performance.
-- Harder modes: So far, I've only trained my agent on Beginner mode.
-- Transfer learning: Could agents trained on Beginner mode play on harder modes through transfer learning? Rather than having to train a separate model from scratch on these other modes, maybe I can apply transfer learning (just need to replace the first layer to match the input size of the board).
-
+To see your agent in action, go to [minesweeperonline.com](http://minesweeperonline.com/#beginner), set the zoom level to 175% and set the game to be the same mode you trained on. [test.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/main/DQN/test.py) uses the [pyautogui](https://pyautogui.readthedocs.io/en/latest/) package to detect objects on screen and gives the agent control of the mouse. (Make sure nothing covers the Minesweeper board on screen). Pyautogui uses the pictures in the [pics](https://github.com/jaewoo5830/Minesweeper-AI/tree/master/pics) folder for detection.
 
 Questions? You can reach me at:
-- stephendlee94@gmail.com
-- [my linkedin](https://www.linkedin.com/in/stephendongsoolee/)
-
-I have many other cool A.I. projects planned - be sure to follow me on LinkedIn to stay updated!
+- kjae@umich.edu

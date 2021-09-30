@@ -149,3 +149,5 @@ To see your agent in action, go to [minesweeperonline.com](http://minesweeperonl
 
 Questions? You can reach me at:
 - kjae@umich.edu
+
+From: [Minesweeper-AI-Reinforcement-Learning](https://github.com/sdlee94/Minesweeper-AI-Reinforcement-Learning) by sdlee94

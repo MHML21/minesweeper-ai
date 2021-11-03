@@ -98,3 +98,5 @@ np.set_printoptions(precision=3)
 b =  Board(16,16)
 b.set_mines_about(4,4,40)
 b.d(4,4)'''
+
+

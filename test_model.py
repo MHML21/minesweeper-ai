@@ -32,3 +32,6 @@ def play(board,snap_row,snap_col):
     print(row)
     print(col)
     print(board)
+
+
+

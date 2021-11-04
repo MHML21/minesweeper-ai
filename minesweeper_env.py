@@ -2,28 +2,37 @@ import random
 import numpy as np
 import pandas as pd
 
+# TO DO : line # 48, 61, 76, 139, 187
 class MinesweeperEnv(object):
     def __init__(self, width, height, n_mines,
         # based on https://github.com/jakejhansen/minesweeper_solver
         rewards={'win':1, 'lose':-1, 'progress':0.3, 'guess':-0.3, 'no_progress' : -0.3}):
         self.nrows, self.ncols = width, height
         self.ntiles = self.nrows * self.ncols
-        self.n_mines = n_mines
-        self.grid = self.init_grid()
-        self.board = self.get_board()
+        self.n_mines = n_mines # number of mines
+        self.grid = self.init_grid() # only keeps track of mines
+        self.board = self.get_board() # entire board under the tiles 
+        # STATE_IM  = matrix with value ranging from -0.25 to 1 ((-2 to 8) / 8 )
+        # -2 indicates bomb, -1 indicates unknown, 0-8 indicates number of bombs adject to the tile
+        # Since we divide the entire matrix by 8, STATE_IM would have value of:
+        # -0.25 indicates bomb, -0.125 indicates unknown, 0-1 indicates number of bombs adject to the tile
+        # STATE = 1d array of objects with coord and value ("U" or "B")
         self.state, self.state_im = self.init_state()
-        self.n_clicks = 0
+        self.n_clicks = 0 # number of clicks
         self.n_progress = 0
         self.n_wins = 0
 
         self.rewards = rewards
 
     def init_grid(self):
+        # fill up grid with all zeros
         board = np.zeros((self.nrows, self.ncols), dtype='object')
         mines = self.n_mines
 
+        # randomly place the mines on the board
         while mines > 0:
             row, col = random.randint(0, self.nrows-1), random.randint(0, self.ncols-1)
+            # make sure you are not placing two mines on the same spot
             if board[row][col] != 'B':
                 board[row][col] = 'B'
                 mines -= 1
@@ -31,15 +40,12 @@ class MinesweeperEnv(object):
         return board
 
     def get_neighbors(self, coord):
+        # Think of coord as pair (x,y)
         x,y = coord[0], coord[1]
 
         neighbors = []
-        for col in range(y-1, y+2):
-            for row in range(x-1, x+2):
-                if ((x != row or y != col) and
-                    (0 <= col < self.ncols) and
-                    (0 <= row < self.nrows)):
-                    neighbors.append(self.grid[row,col])
+        # Get all the tiles that are adjacent to the coordinate (x,y)
+        # WRITE YOUR CODE HERE
 
         return np.array(neighbors)
 
@@ -50,14 +56,9 @@ class MinesweeperEnv(object):
     def get_board(self):
         board = self.grid.copy()
 
-        coords = []
-        for x in range(self.nrows):
-            for y in range(self.ncols):
-                if self.grid[x,y] != 'B':
-                    coords.append((x,y))
-
-        for coord in coords:
-            board[coord] = self.count_bombs(coord)
+        # Set up the board so that all tiles (except tiles with a bomb) 
+        # have an integer (from 0 to 8) that indicates the number of bombs that are adjacent to the tile
+        # WRITE YOUR CODE HERE
 
         return board
 
@@ -70,8 +71,9 @@ class MinesweeperEnv(object):
         state_im = [t['value'] for t in state]
         state_im = np.reshape(state_im, (self.nrows, self.ncols, 1)).astype(object)
 
-        state_im[state_im=='U'] = -1
-        state_im[state_im=='B'] = -2
+        # Set all the values of Unknown tiles to -1
+        # Set all the values of Bomb tiles to -2
+        # WRITE YOUR CODE HERE
 
         state_im = state_im.astype(np.int8) / 8
         state_im = state_im.astype(np.float16)
@@ -132,9 +134,9 @@ class MinesweeperEnv(object):
             coord = self.state[move]['coord']
             value = self.board[coord]
             self.state[move]['value'] = value
-        else:
+        # else: (UNCOMMENT THIS)
             # make state equal to board at given coordinates
-            self.state[action_index]['value'] = value
+            # WRITE YOUR CODE HERE
 
         # reveal all neighbors if value is 0
         if value == 0.0:
@@ -182,11 +184,13 @@ class MinesweeperEnv(object):
         # get neighbors before action
         neighbors = self.get_neighbors(coords)
 
-        self.click(action_index)
+        # WRITE YOUR CODE HERE (3 lines of code)
+        # 1. click the given coordinate (action index) and reveal its value
+        # HINT: use click() function
 
-        # update state image
-        new_state_im = self.get_state_im(self.state)
-        self.state_im = new_state_im
+        # 2. get the new state image and save the return value to "new_state_im"
+
+        # 3. update the self.state_im to new_state_im
 
         if self.state[action_index]['value']=='B': # if lose
             reward = self.rewards['lose']

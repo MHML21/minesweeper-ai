@@ -21,7 +21,8 @@ class Board():
     def __init__(self,rows,cols):
         self.rows = rows
         self.cols = cols
-        self.board = np.full((rows,cols), -1,dtype = float)
+        self.board = np.full((rows,cols), -1,dtype = float) # what user sees
+        # -1 meaning unopened, 0-8 indicates numbers
         self.mines = np.full((rows,cols), 0)
         self.opened = 0
         
@@ -49,7 +50,7 @@ class Board():
             print("u died")
             return self.GAME_LOST
         
-        elif self.board[row,col] == -1:
+        elif self.board[row,col] == -1: # unopened
             counter = 0
             self.opened += 1
             for i in range(-1,2):

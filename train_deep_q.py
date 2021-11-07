@@ -20,7 +20,7 @@ SNAPSHOT_SIZE = 8
 
 init = tf.keras.initializers.HeUniform()
 model = keras.Sequential([
-    
+    keras.layers.Conv2D(64, (3,3), activation='relu', padding='same', input_shape=(8,8)),
     keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
     keras.layers.Dense(100,activation="relu",kernel_initializer=init),
     keras.layers.Dense(100,activation="relu",kernel_initializer=init),
@@ -42,24 +42,31 @@ Y_train = []
 
 total_reward = 0
 
+# play 100000 moves to train the model
 for i in range(100000):
     snapshot_row = randint(0,board.rows - SNAPSHOT_SIZE -1)
     snapshot_col = randint(0,board.cols - SNAPSHOT_SIZE - 1)
+    # pick a random window (snapshot) to consider
     snapshot = board.get_snapshot(snapshot_row, snapshot_col)
-    
-    
-    
+
+    # checks if the snapshot is unopened, or unknown
     is_guess = np.array_equiv(snapshot, np.full((SNAPSHOT_SIZE,SNAPSHOT_SIZE), -1,dtype = float))
+    # valid = bool of if there is any unopened tile
     valid = -1 in snapshot
+    # where model actually predicts, rewards is in 1D array
     rewards = model.predict(np.array([snapshot.flatten()]))[0]
     if random.uniform(0,1) < 0.8:
+        # find the best move
         action = argmax(rewards)
     else:
+        # random move
         action = randint(0,SNAPSHOT_SIZE**2 - 1)
     
     
     row = math.floor(action/SNAPSHOT_SIZE)
     col = action % SNAPSHOT_SIZE
+    # converting local row, col to global row, col
+    # and call function dig()
     gamestate = board.dig_at_snapshot(snapshot_row,snapshot_col,row,col)
     reward = 0
     
@@ -79,12 +86,14 @@ for i in range(100000):
         board = Board(16,16)
         board.set_mines_about(4,4,random.randint(10,40))
     
+    # don't want to do this if this is not valid
     total_reward += reward
     rewards[action] = reward
     
     if valid and not is_guess :
         X_train.append(snapshot.flatten())
         Y_train.append(rewards)
+    # reduce the number of moves that are is_guess or invalid
     elif random.uniform(0,1) > 0.95:
         X_train.append(snapshot.flatten())
         Y_train.append(rewards)

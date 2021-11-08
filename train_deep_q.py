@@ -20,12 +20,12 @@ SNAPSHOT_SIZE = 8
 
 init = tf.keras.initializers.HeUniform()
 model = keras.Sequential([
-    keras.layers.Conv2D(64, (3,3), activation='relu', padding='same', input_shape=(8,8)),
-    keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
-    keras.layers.Dense(100,activation="relu",kernel_initializer=init),
-    keras.layers.Dense(100,activation="relu",kernel_initializer=init),
-    keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
-    keras.layers.Dense(SNAPSHOT_SIZE**2,activation="tanh",kernel_initializer=init),
+    keras.layers.Conv2D(64, (3,3), activation='relu', padding='same', input_shape=(8,8,1)),
+    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
+    # keras.layers.Dense(100,activation="relu",kernel_initializer=init),
+    # keras.layers.Dense(100,activation="relu",kernel_initializer=init),
+    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
+    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="tanh",kernel_initializer=init),
     ])
 
 model.build((None,SNAPSHOT_SIZE**2))

@@ -85,7 +85,8 @@ class Board():
             return False
         return True
     
-    
+    def get_board3d(self):
+        return np.reshape(self.board,(self.rows,self.cols,1))
     def get_snapshot(self,row,col):
         assert(row >= 0 and row <= self.rows + self.SNAPSHOT_SIZE)
         assert(col >= 0 and col <= self.cols + self.SNAPSHOT_SIZE)

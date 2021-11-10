@@ -20,13 +20,14 @@ SNAPSHOT_SIZE = 8
 
 init = tf.keras.initializers.HeUniform()
 model = keras.Sequential([
-    keras.layers.Conv2D(64, (3,3), activation='relu', padding='same', input_shape=(8,8,1)),
-    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
-    # keras.layers.Dense(100,activation="relu",kernel_initializer=init),
-    # keras.layers.Dense(100,activation="relu",kernel_initializer=init),
-    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="relu",kernel_initializer=init),
-    # keras.layers.Dense(SNAPSHOT_SIZE**2,activation="tanh",kernel_initializer=init),
-    ])
+     keras.layers.Conv2D(64, (3,3), activation='relu', padding='same', input_shape = (8,8,1)),
+     keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+     keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+     keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'),
+     keras.layers.Flatten(),
+     keras.layers.Dense(64, activation='relu'),
+     keras.layers.Dense(64, activation='relu'),
+     keras.layers.Dense(SNAPSHOT_SIZE**2, activation='linear')])
 
 model.build((None,SNAPSHOT_SIZE**2))
 model.compile(optimizer = "adam", loss = "huber")
@@ -54,7 +55,9 @@ for i in range(100000):
     # valid = bool of if there is any unopened tile
     valid = -1 in snapshot
     # where model actually predicts, rewards is in 1D array
-    rewards = model.predict(np.array([snapshot.flatten()]))[0]
+    rewards = model.predict(np.reshape(snapshot,(1,8,8,1)))[0]
+    print(rewards)
+    '''
     if random.uniform(0,1) < 0.8:
         # find the best move
         action = argmax(rewards)
@@ -106,7 +109,7 @@ for i in range(100000):
         total_reward = 0
     if (i%100 == 0):
         print(rewards)
-
+    '''
         
 model.save("model_bigger_snapshot")  
     

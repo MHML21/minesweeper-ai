@@ -72,7 +72,10 @@ class Board():
             return self.GAME_CONT
         else:
             return self.INVALID_MOVE
-            
+
+    def board3D(self):
+        return np.reshape(self.board,(self.rows,self.cols,1))
+
     def d(self,row,col):
         self.dig(row,col)
         print(self)

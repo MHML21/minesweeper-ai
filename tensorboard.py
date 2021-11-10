@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard
 
-# use with Tensorflow version 2+
 class ModifiedTensorBoard(TensorBoard):
 
     # Overriding init to set initial step and writer (we want one log file for all .fit() calls)
@@ -9,7 +8,6 @@ class ModifiedTensorBoard(TensorBoard):
         super().__init__(**kwargs)
         self.step = 1
         self.writer = tf.summary.create_file_writer(self.log_dir)
-        self._log_write_dir = self.log_dir
 
     # Overriding this method to stop creating default log writer
     def set_model(self, model):
@@ -32,7 +30,4 @@ class ModifiedTensorBoard(TensorBoard):
     # Custom method for saving own metrics
     # Creates writer, writes custom metrics and closes writer
     def update_stats(self, **stats):
-        with self.writer.as_default():
-            for key, value in stats.items():
-                tf.summary.scalar(key,value,step=self.step)
-                self.writer.flush()
+        self._write_logs(stats, self.step)

@@ -15,6 +15,6 @@ def DQN_setup(learn_rate, input_dims, n_actions, conv_units, dense_units):
                 Dense(dense_units, activation='relu'),
                 Dense(n_actions, activation='linear')])
 
-    model.compile(optimizer=Adam(lr=learn_rate, epsilon=1e-4), loss='mse')
+    model.compile(optimizer=Adam(learning_rate=learn_rate, epsilon=1e-4), loss='mse')
 
     return model

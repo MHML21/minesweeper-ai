@@ -35,7 +35,7 @@ model.compile(optimizer = "adam", loss = "huber")
 
 #model  = keras.models.load_model("model1")
 
-board = Board(16,16)
+board = Board(8,8)
 board.set_mines_about(4,4,random.randint(10,40))
 
 X_train = []
@@ -45,19 +45,17 @@ total_reward = 0
 
 # play 100000 moves to train the model
 for i in range(100000):
-    snapshot_row = randint(0,board.rows - SNAPSHOT_SIZE -1)
-    snapshot_col = randint(0,board.cols - SNAPSHOT_SIZE - 1)
+    snapshot_row = 0
+    snapshot_col = 0
     # pick a random window (snapshot) to consider
     snapshot = board.get_snapshot(snapshot_row, snapshot_col)
 
-    # checks if the snapshot is unopened, or unknown
-    is_guess = np.array_equiv(snapshot, np.full((SNAPSHOT_SIZE,SNAPSHOT_SIZE), -1,dtype = float))
+
     # valid = bool of if there is any unopened tile
     valid = -1 in snapshot
     # where model actually predicts, rewards is in 1D array
-    rewards = model.predict(np.reshape(snapshot,(1,8,8,1)))[0]
-    print(rewards)
-    '''
+    rewards = model.predict(np.reshape(snapshot,(1,SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))[0]
+
     if random.uniform(0,1) < 0.8:
         # find the best move
         action = argmax(rewards)
@@ -68,16 +66,12 @@ for i in range(100000):
     
     row = math.floor(action/SNAPSHOT_SIZE)
     col = action % SNAPSHOT_SIZE
-    # converting local row, col to global row, col
-    # and call function dig()
-    gamestate = board.dig_at_snapshot(snapshot_row,snapshot_col,row,col)
+    
+    gamestate = board.dig(row,col)
     reward = 0
     
     if gamestate == board.GAME_CONT:
-        if is_guess:
-            reward = 0
-        else:
-            reward = 1
+        reward = 1
     elif gamestate == board.INVALID_MOVE:
         reward = -1
     elif gamestate == board.GAME_LOST:
@@ -90,16 +84,13 @@ for i in range(100000):
         board.set_mines_about(4,4,random.randint(10,40))
     
     # don't want to do this if this is not valid
-    total_reward += reward
-    rewards[action] = reward
+    next_state = board.get_snapshot(snapshot_row, snapshot_col)
+    next_state_rewards = model.predict(np.reshape(next_state,(1,SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))[0]
+    rewards[action] = reward + 0.01*max(next_state_rewards)
     
-    if valid and not is_guess :
-        X_train.append(snapshot.flatten())
-        Y_train.append(rewards)
-    # reduce the number of moves that are is_guess or invalid
-    elif random.uniform(0,1) > 0.95:
-        X_train.append(snapshot.flatten())
-        Y_train.append(rewards)
+
+    X_train.append(np.reshape(snapshot,(SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))
+    Y_train.append(rewards)
     
     if (i%4 == 0 and not len(X_train) == 0):
         model.fit(np.array(X_train), np.array(Y_train))
@@ -109,7 +100,8 @@ for i in range(100000):
         total_reward = 0
     if (i%100 == 0):
         print(rewards)
-    '''
+    
+    # epsilon = max(EPSILON_MIN, epsilon*0.9998)
         
 model.save("model_bigger_snapshot")  
     

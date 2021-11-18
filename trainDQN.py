@@ -24,6 +24,7 @@ UPDATE_TARGET_EVERY = 5
 
 X_train = []
 Y_train = []
+batch_array = []
 
 def main():
     # Initialization of the board
@@ -31,6 +32,7 @@ def main():
     # Set the mines (use set_mines_about) about (2,2)
 
     # create the model using DQN_setup
+    # and target_model
     # HINT: use board3D function for input dimension
 
     # dig at the 
@@ -41,18 +43,14 @@ def main():
 
     # get the reward using env.dig function
 
-    # train
-    current_qs_list = model.predict(np.reshape(temp_state_im, (1, env.rows, env.cols, 1)))
-    current_qs = current_qs_list[0]
-    print("list_q_table:", current_qs_list)
-    print(type(current_qs))
-    print("q_table:", current_qs)
-    current_qs[action] = reward
-    X_train.append(temp_state_im)
-    Y_train.append(current_qs)
+    # TRAIN PROCESS
+    # append the data to the batch_array
+    # 1. create q_table based on current state
+    # 2. calculate the potential reward using target model
+    # 3. update the q_table with reward + DISCOUNT FACTOR * potential reward
+    # 4. append to the current state to the X_train and updated q_table to the Y_train
+
     model.fit(np.array(X_train), np.array(Y_train), batch_size=1)
-    print("3")
-    # print(env)
 
 
 if __name__ == "__main__":

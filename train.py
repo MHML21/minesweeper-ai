@@ -47,6 +47,7 @@ def main():
 
     # main
     new_state, reward = env.dig(math.floor(action / 4), action % 4)
+    new_state = env.board3D()
 
     # train
     batch_array.append((state_im, action, reward, new_state))

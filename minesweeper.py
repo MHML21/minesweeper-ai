@@ -61,7 +61,7 @@ class Board():
             self.board[(row,col)] = counter/8
             if self.opened == self.rows * self.cols - self.num_mines:
                 print("you win")
-                return self.GAME_WON
+                return self.board, self.GAME_WON
             
             if (counter == 0):
                 for i in range(-1,2):
@@ -69,9 +69,9 @@ class Board():
                         if self.is_in_bounds(row+i,col+j):
                             if self.board[(row+i,col+j)] == -1:
                                 self.dig(row + i,col+j)
-            return self.GAME_CONT
+            return self.board, self.GAME_CONT
         else:
-            return self.INVALID_MOVE
+            return self.board, self.INVALID_MOVE
 
     def board3D(self):
         return np.reshape(self.board,(self.rows,self.cols,1))

@@ -54,7 +54,9 @@ for i in range(100000):
     # valid = bool of if there is any unopened tile
     valid = -1 in snapshot
     # where model actually predicts, rewards is in 1D array
-    rewards = model.predict(np.reshape(snapshot,(1,SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))[0]
+    snapshot_temp = np.reshape(snapshot,(1,64))
+    snapshot3D = np.reshape(snapshot_temp,(SNAPSHOT_SIZE,SNAPSHOT_SIZE,1))
+    rewards = model.predict(np.reshape(snapshot3D,(1,SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))[0]
 
     if random.uniform(0,1) < 0.8:
         # find the best move
@@ -89,7 +91,7 @@ for i in range(100000):
     rewards[action] = reward + 0.01*max(next_state_rewards)
     
 
-    X_train.append(np.reshape(snapshot,(SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)))
+    X_train.append(np.reshape(snapshot,(SNAPSHOT_SIZE,SNAPSHOT_SIZE,1)).astype(object))
     Y_train.append(rewards)
     
     if (i%4 == 0 and not len(X_train) == 0):

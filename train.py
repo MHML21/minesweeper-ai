@@ -24,12 +24,14 @@ UPDATE_TARGET_EVERY = 5
 
 X_train = []
 Y_train = []
+batch_array = []
 
 def main():
     env = Board(4, 4)
     env.set_mines_about(2,2,1)
     state_im = env.board3D()
     model = DQN_setup(learn_rate, state_im.shape, 16, CONV_UNITS, DENSE_UNITS)
+    target_model = DQN_setup(learn_rate, state_im.shape, 16, CONV_UNITS, DENSE_UNITS)
     # print("init")
     # print(env)
     env.dig(2,2)
@@ -44,19 +46,29 @@ def main():
     print("action:", action)
 
     # main
-    reward = env.dig(math.floor(action / 4), action % 4)
+    new_state, reward = env.dig(math.floor(action / 4), action % 4)
 
     # train
-    current_qs_list = model.predict(np.reshape(temp_state_im, (1, env.rows, env.cols, 1)))
-    current_qs = current_qs_list[0]
-    print("list_q_table:", current_qs_list)
-    print(type(current_qs))
-    print("q_table:", current_qs)
-    moves[action] = reward
-    X_train.append(temp_state_im)
-    Y_train.append(moves)
-    # model.fit(np.array(X_train), np.array(Y_train), batch_size=1,
-    #                   shuffle=False, verbose=0)
+    batch_array.append((state_im, action, reward, new_state))
+    current_states = np.array([transition[0] for transition in batch_array])
+    current_qs_list = model.predict(current_states)
+
+    new_current_states = np.array([transition[3] for transition in batch_array])
+    future_qs_list = target_model.predict(new_current_states)
+    for i, (current_state, action, reward, new_current_states) in enumerate(batch_array):
+            if reward % 2:
+                max_future_q = np.max(future_qs_list[i])
+                new_q = reward + DISCOUNT * max_future_q
+            else:
+                new_q = reward
+
+            current_qs = current_qs_list[i]
+            current_qs[action] = new_q
+
+            X_train.append(current_state)
+            Y_train.append(current_qs)
+
+    model.fit(np.array(X_train), np.array(Y_train), batch_size=1)
     print("3")
     # print(env)
 

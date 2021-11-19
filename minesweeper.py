@@ -48,7 +48,7 @@ class Board():
     def dig(self,row,col):
         if self.mines[row,col] == 1:
             print("u died")
-            return self.GAME_LOST
+            return self.board, self.GAME_LOST
         
         elif self.board[row,col] == -1: # unopened
             counter = 0

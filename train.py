@@ -46,9 +46,17 @@ def main():
     print("action:", action)
 
     # main
-    new_state, reward = env.dig(math.floor(action / 4), action % 4)
+    new_state, gamestate = env.dig(math.floor(action / 4), action % 4)
     new_state = env.board3D()
-
+    
+    reward = 0
+    if gamestate == Board.GAME_LOST or gamestate == Board.INVALID_MOVE:
+        reward = -1
+    elif gamestate == Board.GAME_CONT:
+        reward = 1
+    else:
+        reward = 2
+    
     # train
     batch_array.append((state_im, action, reward, new_state))
     current_states = np.array([transition[0] for transition in batch_array])

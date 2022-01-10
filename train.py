@@ -22,6 +22,11 @@ CONV_UNITS = 64 # number of neurons in each conv layer
 DENSE_UNITS = 512 # number of neurons in fully connected dense layer
 UPDATE_TARGET_EVERY = 5
 
+gamestate_to_reward = {Board.GAME_LOST: -1,
+                       Board.INVALID_MOVE: -1,
+                       Board.GAME_CONT: 1,
+                       Board.GAME_WON: 2}
+
 X_train = []
 Y_train = []
 batch_array = []
@@ -49,13 +54,7 @@ def main():
     new_state, gamestate = env.dig(math.floor(action / 4), action % 4)
     new_state = env.board3D()
     
-    reward = 0
-    if gamestate == Board.GAME_LOST or gamestate == Board.INVALID_MOVE:
-        reward = -1
-    elif gamestate == Board.GAME_CONT:
-        reward = 1
-    else:
-        reward = 2
+    reward = gamestate_to_reward[gamestate]
     
     # train
     batch_array.append((state_im, action, reward, new_state))

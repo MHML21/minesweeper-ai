@@ -19,15 +19,28 @@ class Board():
     SNAPSHOT_SIZE = 8
     
     def __init__(self,rows,cols):
+        self.rewards={'WIN':1, 'LOSE':-1, 'PROGRESS':0.3, 'GUESS':-0.3, 'NO_PROGRESS' : -0.3}
         self.rows = rows
         self.cols = cols
+        self.ntiles = rows*cols
         self.board = np.full((rows,cols), -1,dtype = float) # what user sees
         # -1 meaning unopened, 0-8 indicates numbers
-        self.mines = np.full((rows,cols), 0)
+        self.mines = np.full((rows,cols), 0) # 0 means not bomb, 1 means bomb
         self.opened = 0
+        self.n_wins = 0
         
         for row in range(rows):
             for col in range(cols):
+                self.mines[(row,col)] = 0
+
+    def reset(self):
+        self.board = np.full((self.rows,self.cols), -1,dtype = float) # what user sees
+        # -1 meaning unopened, 0-8 indicates numbers
+        self.mines = np.full((self.rows,self.cols), 0) # 0 means not bomb, 1 means bomb
+        self.opened = 0
+        
+        for row in range(self.rows):
+            for col in range(self.cols):
                 self.mines[(row,col)] = 0
 
     def set_mines_about(self,row_center,col_center,num_mines):
@@ -38,19 +51,26 @@ class Board():
                 if self.is_in_bounds(row_center+i,col_center+j):
                     sample_points.remove((row_center+i)*self.cols + (col_center+j))
 
-        
+        # Set the mines on the board that is not around the center point
         cords = random.sample(sample_points, num_mines)
         for cord in cords:
             row = math.floor(cord/self.cols)
             col = cord % self.cols
             self.mines[(row,col)] = 1
+
+        # open the center point
+        self.dig(row_center, col_center)
         
     def dig(self,row,col):
+        print("Opening ( %d, %d ) ..." % (row, col))
+
+        # If the tile is a bomb
         if self.mines[row,col] == 1:
-            print("u died")
-            return self.board, self.GAME_LOST
+            print("GAME LOST, BOMB DETECTED")
+            board3d = self.board3D()
+            return board3d, self.rewards['LOSE'], True
         
-        elif self.board[row,col] == -1: # unopened
+        elif self.board[row,col] == -1: # NOT A BOMB && UNOPENED
             counter = 0
             self.opened += 1
             for i in range(-1,2):
@@ -59,22 +79,35 @@ class Board():
                         if self.mines[(row + i,col+j)] == 1:
                             counter += 1
             self.board[(row,col)] = counter/8
-            if self.opened == self.rows * self.cols - self.num_mines:
-                print("you win")
-                return self.board, self.GAME_WON
+            if self.opened == (self.ntiles - self.num_mines):
+                self.n_wins += 1
+                print("GAME WON, CONGRATULATIONS!!")
+                board3d = self.board3D()
+                return board3d, self.rewards['WIN'], True
             
-            if (counter == 0):
+            # If there are no bombs around it, open until they find one
+            if counter == 0:
                 for i in range(-1,2):
                     for j in range(-1,2):
                         if self.is_in_bounds(row+i,col+j):
                             if self.board[(row+i,col+j)] == -1:
                                 self.dig(row + i,col+j)
-            return self.board, self.GAME_CONT
+            print("Progressed ...")
+            board3d = self.board3D()
+            return board3d, self.rewards['PROGRESS'], False
         else:
-            return self.board, self.INVALID_MOVE
+            print("INVALID MOVE")
+            board3d = self.board3D()
+            return board3d, self.rewards['NO_PROGRESS'], False
 
     def board3D(self):
         return np.reshape(self.board,(self.rows,self.cols,1))
+
+    def printBoard(self):
+        print(self.board * 8)
+
+    def printMines(self):
+        print(self.mines)
 
     def d(self,row,col):
         self.dig(row,col)

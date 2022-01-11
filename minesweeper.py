@@ -28,6 +28,7 @@ class Board():
         self.mines = np.full((rows,cols), 0) # 0 means not bomb, 1 means bomb
         self.opened = 0
         self.n_wins = 0
+        self.n_progress = 0
         
         for row in range(rows):
             for col in range(cols):
@@ -38,6 +39,7 @@ class Board():
         # -1 meaning unopened, 0-8 indicates numbers
         self.mines = np.full((self.rows,self.cols), 0) # 0 means not bomb, 1 means bomb
         self.opened = 0
+        self.n_progress = 0
         
         for row in range(self.rows):
             for col in range(self.cols):
@@ -81,6 +83,7 @@ class Board():
             self.board[(row,col)] = counter/8
             if self.opened == (self.ntiles - self.num_mines):
                 self.n_wins += 1
+                self.n_progress += 1
                 print("GAME WON, CONGRATULATIONS!!")
                 board3d = self.board3D()
                 return board3d, self.rewards['WIN'], True
@@ -93,6 +96,7 @@ class Board():
                             if self.board[(row+i,col+j)] == -1:
                                 self.dig(row + i,col+j)
             print("Progressed ...")
+            self.n_progress += 1
             board3d = self.board3D()
             return board3d, self.rewards['PROGRESS'], False
         else:

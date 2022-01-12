@@ -11,11 +11,6 @@ from pandas import *
 
 class Board():
     
-    GAME_LOST = 0
-    GAME_CONT = 1
-    GAME_WON = 2
-    INVALID_MOVE = 3
-    
     SNAPSHOT_SIZE = 8
     
     def __init__(self,rows,cols):
@@ -64,11 +59,11 @@ class Board():
         self.dig(row_center, col_center)
         
     def dig(self,row,col):
-        print("Opening ( %d, %d ) ..." % (row, col))
+        # print("Opening ( %d, %d ) ..." % (row, col))
 
         # If the tile is a bomb
         if self.mines[row,col] == 1:
-            print("GAME LOST, BOMB DETECTED")
+            # print("GAME LOST, BOMB DETECTED")
             board3d = self.board3D()
             return board3d, self.rewards['LOSE'], True
         
@@ -84,7 +79,7 @@ class Board():
             if self.opened == (self.ntiles - self.num_mines):
                 self.n_wins += 1
                 self.n_progress += 1
-                print("GAME WON, CONGRATULATIONS!!")
+                # print("GAME WON, CONGRATULATIONS!!")
                 board3d = self.board3D()
                 return board3d, self.rewards['WIN'], True
             
@@ -95,7 +90,7 @@ class Board():
                         if self.is_in_bounds(row+i,col+j):
                             if self.board[(row+i,col+j)] == -1:
                                 self.dig(row + i,col+j)
-            print("Progressed ...")
+            # print("Progressed ...")
             self.n_progress += 1
             board3d = self.board3D()
             return board3d, self.rewards['PROGRESS'], False

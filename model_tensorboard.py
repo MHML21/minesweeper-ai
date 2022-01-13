@@ -1,6 +1,6 @@
 import os
 import tensorflow as tf
-from keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard
 
 # use with Tensorflow version 2+
 class ModifiedTensorBoard(TensorBoard):

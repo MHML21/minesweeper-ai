@@ -1,84 +1,103 @@
-from minesweeper import Board
-# from minesweeper_env import *
-from DQNsetup import *
-import numpy as np
-import pandas as pd
+# RUN THE FILES IF THEY HAVEN'T
+from tensorflow.keras.models import load_model
+from DQNAgent import *
 import math
+from tqdm import tqdm
+import pickle
 
-# Learning settings
-BATCH_SIZE = 64
-learn_rate = 0.01
-LEARN_DECAY = 0.99975
-LEARN_MIN = 0.001
-DISCOUNT = 0.1 #gamma
+import warnings
+warnings.filterwarnings('ignore')
 
-# Exploration settings
-epsilon = 0.95
-EPSILON_DECAY = 0.99975
-EPSILON_MIN = 0.01
-
-# DQN settings
-CONV_UNITS = 64 # number of neurons in each conv layer
-DENSE_UNITS = 512 # number of neurons in fully connected dense layer
-UPDATE_TARGET_EVERY = 5
-
-gamestate_to_reward = {Board.GAME_LOST: -1,
-                       Board.INVALID_MOVE: -1,
-                       Board.GAME_CONT: 1,
-                       Board.GAME_WON: 2}
-
-X_train = []
-Y_train = []
-batch_array = []
+AGG_STATS_EVERY = 100 # calculate stats every 100 games for tensorboard
+SAVE_MODEL_EVERY = 10_000 # save model and replay every 10,000 episodes
 
 def main():
-    env = Board(4, 4)
-    env.set_mines_about(2,2,1)
-    state_im = env.board3D()
-    model = DQN_setup(learn_rate, state_im.shape, 16, CONV_UNITS, DENSE_UNITS)
-    target_model = DQN_setup(learn_rate, state_im.shape, 16, CONV_UNITS, DENSE_UNITS)
-    # print("init")
-    # print(env)
-    env.dig(2,2)
-    temp_state_im = state_im
-    # get action
-    board = temp_state_im.reshape(1, 16)
-    moves = model.predict(np.reshape(temp_state_im, (1, env.rows, env.cols, 1)))
-    print(type(moves))
-    print("moves:", moves)
-    # moves[board!=-1] = np.min(moves) # set already clicked tiles to min value
-    action = np.argmax(moves)
-    print("action:", action)
+    # INITIALIZING EVERTHING CELL
 
-    # main
-    new_state, gamestate = env.dig(math.floor(action / 4), action % 4)
-    new_state = env.board3D()
-    
-    reward = gamestate_to_reward[gamestate]
-    
-    # train
-    batch_array.append((state_im, action, reward, new_state))
-    current_states = np.array([transition[0] for transition in batch_array])
-    current_qs_list = model.predict(current_states)
+    # Initialize the Board (9x9 matrix)
+    env = Board(9, 9)
 
-    new_current_states = np.array([transition[3] for transition in batch_array])
-    future_qs_list = target_model.predict(new_current_states)
-    for i, (current_state, action, reward, new_current_states) in enumerate(batch_array):
-            if reward % 2:
-                max_future_q = np.max(future_qs_list[i])
-                new_q = reward + DISCOUNT * max_future_q
-            else:
-                new_q = reward
+    # Set the mines about random coordinate
+    # Assume user clicked the random coordinate as the first tile
+    f_row, f_col = np.random.randint(env.rows, size=2)
+    print("First row: %d, First Col: %d" % (f_row, f_col))
+    env.set_mines_about(f_row, f_col,10) # set_mines_about(self,row_center,col_center,num_mines)
+    # print("Mines: ")
+    # env.printMines()
+    # print("Board: ")
+    # env.printBoard()
+    state_im = env.board3D() # board is currently 2D, making it 3D by (row, col, 1)
 
-            current_qs = current_qs_list[i]
-            current_qs[action] = new_q
+    agent = DQNAgent(env)
 
-            X_train.append(current_state)
-            Y_train.append(current_qs)
+    progress_list, wins_list, ep_rewards = [], [], []
+    n_clicks = 0
 
-    model.fit(np.array(X_train), np.array(Y_train), batch_size=1)
-    print("3")
-    # print(env)
+    # PLAY THE GAME!!! (# episodes Games)
+    for episode in tqdm(range(1,episodes+1), unit='episode'):
+        agent.tensorboard.step = episode
+        
+        env.reset()
+        f_row, f_col = np.random.randint(env.rows, size=2)
+        env.set_mines_about(f_row, f_col,10)
+        done = False
+        ep_reward = 0
+        
+        past_n_wins = env.n_wins
+
+        # play until lose
+        while not done:
+            
+            current_state = env.board3D()
+            
+            action = agent.get_action(current_state)
+
+            # Retrieve the next step and reward
+            new_state, reward, done = env.dig(math.floor(action / env.cols), action % env.cols)
+            # print("\nREWARD: ", reward)
+            ep_reward += reward
+
+            # append the data to batch_array
+            agent.update_replay_memory((current_state, action, reward, new_state, done))
+            agent.train(done)
+
+            n_clicks += 1
+            
+        progress_list.append(env.n_progress) # n of non-guess moves
+        ep_rewards.append(ep_reward)
+        
+        # print("Number of Wins :", env.n_wins)
+        if env.n_wins > past_n_wins:
+            wins_list.append(1)
+        else:
+            wins_list.append(0)
+
+        if len(agent.replay_memory) < MEM_SIZE_MIN:
+            # print("SKIP after Training Process")
+            continue
+
+        if not episode % AGG_STATS_EVERY:
+            med_progress = round(np.median(progress_list[-AGG_STATS_EVERY:]), 2)
+            win_rate = round(np.sum(wins_list[-AGG_STATS_EVERY:]) / AGG_STATS_EVERY, 2)
+            med_reward = round(np.median(ep_rewards[-AGG_STATS_EVERY:]), 2)
+
+            agent.tensorboard.update_stats(
+                progress_med = med_progress,
+                winrate = win_rate,
+                reward_med = med_reward,
+                learn_rate = agent.learn_rate,
+                epsilon = agent.epsilon)
+
+            print(f'Episode: {episode}, Median progress: {med_progress}, Median reward: {med_reward}, Win rate : {win_rate}')
+
+        if not episode % SAVE_MODEL_EVERY:
+            with open(f'replay/{MODEL_NAME}.pkl', 'wb') as output:
+                pickle.dump(agent.replay_memory, output)
+
+            agent.model.save(f'models/{MODEL_NAME}.h5')
+        
+    print("Number of Wins :", env.n_wins)
+
 
 
 if __name__ == "__main__":

@@ -125,7 +125,7 @@ def get_action(self, state):
   return move
 ```
 
-As in [Sentdex's Deep Q-learning tutorial](https://www.youtube.com/watch?v=t3fbETsIBCY&list=PLQVvvaa0QuDezJFIOU5wDdfy4e9vdnx-7&index=5&ab_channel=sentdex), I used a Tensorboard to track the performance of my models. The Tensorboard class was modified to *not* output a log file every time .fit() is called (default behaviour). If using Tensorflow version 2+ use [my_tensorboard2.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/my_tensorboard2.py), otherwise use [my_tensorboard.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/my_tensorboard.py).
+As in [Sentdex's Deep Q-learning tutorial](https://www.youtube.com/watch?v=t3fbETsIBCY&list=PLQVvvaa0QuDezJFIOU5wDdfy4e9vdnx-7&index=5&ab_channel=sentdex), I used a Tensorboard to track the performance of my models. The Tensorboard class was modified to *not* output a log file every time .fit() is called (default behaviour). Use Tensorflow version 2+ [model_tensorboard.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/main/model_tensorboard.py).
 
 Here is an example of a Tensorboard output tracking the median reward and win rate obtained by different models. Here I'm keeping all parameters constant except for the number of neurons/layers in my convolutional network.
 
@@ -145,9 +145,9 @@ tensorboard --logdir logs
 ```
 
 
-Code for training can be found in [train.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/master/DQN/train.py) which trains the agent on Beginner mode by default (can adjust nrows, ncolumns and nmines using the command line arguments).
+Code for training can be found in [train.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/main/train.py) which trains the agent on Beginner mode by default (can adjust nrows, ncolumns and nmines using the command line arguments).
 
-To see your agent in action, go to [minesweeperonline.com](http://minesweeperonline.com/#beginner), set the zoom level to 175% and set the game to be the same mode you trained on. [test.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/main/DQN/test.py) uses the [pyautogui](https://pyautogui.readthedocs.io/en/latest/) package to detect objects on screen and gives the agent control of the mouse. (Make sure nothing covers the Minesweeper board on screen). Pyautogui uses the pictures in the [pics](https://github.com/jaewoo5830/Minesweeper-AI/tree/master/pics) folder for detection.
+To see your agent in action, go to [minesweeperonline.com](http://minesweeperonline.com/#beginner), set the zoom level to 175% and set the game to be the same mode you trained on. [test.py](https://github.com/jaewoo5830/Minesweeper-AI/blob/main/test.py) uses the [pyautogui](https://pyautogui.readthedocs.io/en/latest/) package to detect objects on screen and gives the agent control of the mouse. (Make sure nothing covers the Minesweeper board on screen). Pyautogui uses the pictures in the [pics](https://github.com/jaewoo5830/Minesweeper-AI/tree/master/pics) folder for detection.
 
 Questions? You can reach me at:
 - kjae@umich.edu

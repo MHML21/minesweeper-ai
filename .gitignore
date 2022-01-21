@@ -4,8 +4,7 @@ logs/
 replay/
 *.py[cod]
 *$py.class
-ss
-ss.pub
+private/
 
 # C extensions
 *.so

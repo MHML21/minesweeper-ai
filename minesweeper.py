@@ -71,7 +71,7 @@ class Board():
         
     def dig(self,row,col):
         # print("Opening ( %d, %d ) ..." % (row, col))
-        current_state = self.board
+        current_state = np.copy(self.board)
 
         # If the tile is a bomb
         if self.mines[row,col] == 1:
@@ -106,13 +106,13 @@ class Board():
             board3d = self.board3D()
 
             if np.sum(self.board == -1) == np.sum(current_state == -1):
-                print("NO PROGRESS")
+                # print("NO PROGRESS")
                 return board3d, self.rewards['NO_PROGRESS'], False
             
             else:
                 neighbors = self.get_neighbors(row, col)
                 if all(t==-1 for t in neighbors): # if guess (all neighbors are unsolved)
-                    print("GUESS")
+                    # print("GUESS")
                     return board3d, self.rewards['GUESS'], False
                 else:
                     self.n_progress += 1
